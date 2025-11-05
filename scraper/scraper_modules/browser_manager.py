@@ -2,9 +2,7 @@
 Browser manager for handling multiple Selenium windows
 """
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from scraper_modules.utils import get_random_user_agent
 from config import HEADLESS, PAGE_LOAD_TIMEOUT, IMPLICIT_WAIT
 import logging
@@ -48,9 +46,9 @@ class BrowserManager:
             y_position = (window_index * 100) % 400
             chrome_options.add_argument(f"--window-position={x_position},{y_position}")
 
-        # Create driver
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        # Create driver - Selenium 4.6+ auto-manages ChromeDriver
+        # No need for webdriver_manager, Selenium handles it automatically
+        driver = webdriver.Chrome(options=chrome_options)
 
         # Set timeouts
         driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)

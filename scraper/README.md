@@ -133,10 +133,9 @@ Scraper şu önlemleri alır:
 ## 🐛 Sorun Giderme
 
 ### Chrome driver hatası
-```bash
-# ChromeDriver otomatik indirilmeli, ama sorun olursa:
-pip install --upgrade webdriver-manager
-```
+Selenium 4.6+ otomatik olarak ChromeDriver'ı yönetir. Chrome tarayıcınızın güncel olduğundan emin olun.
+
+**Windows kullanıcıları için:** İlk çalıştırmada ChromeDriver otomatik indirilir, birkaç saniye sürebilir.
 
 ### "No such element" hatası
 - Google Maps'in HTML yapısı değişmiş olabilir
