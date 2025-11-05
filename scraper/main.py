@@ -46,7 +46,7 @@ class GoogleMapsScraperApp:
 
         try:
             # Start browser(s)
-            with BrowserManager(num_windows=1) as drivers:  # Start with 1 window for safety
+            with BrowserManager(num_windows=self.num_windows) as drivers:
                 driver = drivers[0]
                 scraper = GoogleMapsScraper(driver)
 
@@ -218,8 +218,8 @@ Categories:
     parser.add_argument(
         '--windows',
         type=int,
-        default=1,
-        help='Number of browser windows (default: 1, use 3-4 for parallel scraping)'
+        default=NUM_WINDOWS,
+        help=f'Number of browser windows (default: {NUM_WINDOWS} from config.py)'
     )
 
     args = parser.parse_args()
