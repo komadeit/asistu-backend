@@ -45,12 +45,14 @@ class GoogleMapsScraperApp:
         all_results = []
 
         try:
-            # Start browser(s)
-            with BrowserManager(num_windows=self.num_windows) as drivers:
+            # Start browser(s) with tab support
+            browser_manager = BrowserManager(num_windows=self.num_windows)
+            with browser_manager as drivers:
                 driver = drivers[0]
-                scraper = GoogleMapsScraper(driver)
+                # Pass browser_manager to scraper for tab management
+                scraper = GoogleMapsScraper(driver, browser_manager=browser_manager)
 
-                # Perform scraping
+                # Perform scraping (uses optimized tab-based approach)
                 results = scraper.scrape(search_query, city, district)
                 all_results.extend(results)
 
