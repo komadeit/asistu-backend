@@ -70,7 +70,37 @@ pip install -r requirements.txt
 
 ## 🎯 Kullanım
 
-### Temel Kullanım
+### 🚀 Batch Mode (Toplu Scraping) - YENİ!
+
+Tüm kategorileri otomatik olarak tara:
+
+```bash
+# TÜM kategorileri TÜM şehirlerde tara (config.py'den)
+python main.py --batch
+
+# TÜM kategorileri tek şehirde tara
+python main.py --batch --city "Istanbul"
+
+# TÜM kategorileri İstanbul/Kadıköy'de tara
+python main.py --batch --city "Istanbul" --district "Kadıköy"
+```
+
+**Batch Mode ne yapar?**
+- `config.py` dosyasındaki `CATEGORIES` listesini okur
+- `CITIES` listesini okur (veya --city ile override eder)
+- Her kategori × şehir kombinasyonu için ayrı Excel oluşturur
+- Örnek: 10 kategori × 5 şehir = **50 Excel dosyası** otomatik!
+
+**Çıktı dosyaları:**
+```
+output/
+├── güzellik_merkezi_Istanbul_20241105_143022.xlsx
+├── güzellik_merkezi_Ankara_20241105_144530.xlsx
+├── nail_salon_Istanbul_20241105_150215.xlsx
+└── ...
+```
+
+### Tek Kategori Scraping
 
 ```bash
 # Güzellik salonları - İstanbul (tüm ilçeler)
@@ -79,22 +109,20 @@ python main.py --category "güzellik salonu" --city "Istanbul"
 # Diş klinikleri - Ankara, Çankaya
 python main.py --category "diş kliniği" --city "Ankara" --district "Çankaya"
 
-# Tırnak salonları - İzmir, Karşıyaka
-python main.py --category "tırnak salonu" --city "Izmir" --district "Karşıyaka"
-
-# Estetik klinikleri - Bursa
-python main.py --category "estetik kliniği" --city "Bursa"
+# Tırnak salonları - İzmir
+python main.py --category "tırnak salonu" --city "Izmir"
 ```
 
 ### Parametreler
 
 | Parametre | Zorunlu | Açıklama | Örnek |
 |-----------|---------|----------|-------|
-| `--category` | ✅ Evet | İşletme kategorisi | "güzellik salonu" |
-| `--city` | ✅ Evet | Şehir adı | "Istanbul" |
+| `--batch` | ❌ Hayır | Batch mode (tüm kategorileri tara) | - |
+| `--category` | ⚠️ Evet* | İşletme kategorisi (*batch yoksa zorunlu) | "güzellik salonu" |
+| `--city` | ⚠️ Evet* | Şehir adı (*batch'te opsiyonel) | "Istanbul" |
 | `--district` | ❌ Hayır | İlçe adı (opsiyonel) | "Kadıköy" |
-| `--output` | ❌ Hayır | Özel dosya adı | "istanbul_salons.xlsx" |
-| `--windows` | ❌ Hayır | Browser pencere sayısı (varsayılan: 1) | 3 |
+| `--output` | ❌ Hayır | Özel dosya adı (batch'te göz ardı edilir) | "istanbul_salons.xlsx" |
+| `--windows` | ❌ Hayır | Browser pencere sayısı (varsayılan: 2) | 3 |
 
 ### Örnekler
 
@@ -148,6 +176,29 @@ DETAIL_PAGE_DELAY = 0.5   # Detail page çok hızlı yükleme
 
 # Sonuç limiti
 MAX_RESULTS_PER_SEARCH = 500  # Her aramada max kaç sonuç
+
+# Batch mode kategorileri (istediğin gibi düzenle!)
+CATEGORIES = [
+    "güzellik merkezi",
+    "güzellik salonu",
+    "beauty center",
+    "nail salon",
+    "nail art",
+    "tırnak salonu",
+    "diş kliniği",
+    "dental clinic",
+    "estetik kliniği",
+    "aesthetic clinic",
+]
+
+# Batch mode şehirleri
+CITIES = [
+    "Istanbul",
+    "Ankara",
+    "Izmir",
+    "Bursa",
+    "Antalya",
+]
 ```
 
 **Rate limit riski varsa:**

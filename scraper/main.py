@@ -11,7 +11,10 @@ from tqdm import tqdm
 from scraper_modules.browser_manager import BrowserManager
 from scraper_modules.google_maps import GoogleMapsScraper
 from scraper_modules.utils import build_search_query
-from config import NUM_WINDOWS, OUTPUT_DIR, EXCEL_FILE_PREFIX
+from config import (
+    NUM_WINDOWS, OUTPUT_DIR, EXCEL_FILE_PREFIX,
+    BATCH_MODE, CATEGORIES, CITIES
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -164,6 +167,89 @@ class GoogleMapsScraperApp:
             logger.error(f"Scraping failed: {e}")
             raise
 
+    def batch_run(self, categories=None, cities=None, district=None):
+        """
+        Run batch scraping for multiple categories and cities
+
+        Args:
+            categories: List of categories to scrape (default: CATEGORIES from config)
+            cities: List of cities to scrape (default: CITIES from config)
+            district: Optional district name (applies to all)
+
+        Returns:
+            List of paths to exported Excel files
+        """
+        if categories is None:
+            categories = CATEGORIES
+        if cities is None:
+            cities = CITIES
+
+        logger.info("=" * 80)
+        logger.info("🚀 BATCH MODE: SCRAPING MULTIPLE CATEGORIES AND CITIES")
+        logger.info("=" * 80)
+        logger.info(f"Categories: {len(categories)}")
+        logger.info(f"Cities: {len(cities)}")
+        logger.info(f"Total combinations: {len(categories) * len(cities)}")
+        logger.info("=" * 80)
+
+        results_files = []
+        total_combinations = len(categories) * len(cities)
+        current = 0
+
+        for city in cities:
+            for category in categories:
+                current += 1
+                logger.info("")
+                logger.info("=" * 80)
+                logger.info(f"📍 BATCH {current}/{total_combinations}: {category} in {city}")
+                logger.info("=" * 80)
+
+                try:
+                    # Generate filename with category and city
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    # Clean category name for filename
+                    clean_category = category.replace(" ", "_").replace("/", "_")
+                    filename = f"{clean_category}_{city}_{timestamp}.xlsx"
+
+                    # Run scraping
+                    excel_path = self.run(
+                        category=category,
+                        city=city,
+                        district=district,
+                        output_filename=filename
+                    )
+
+                    if excel_path:
+                        results_files.append(excel_path)
+                        logger.info(f"✅ Saved: {excel_path}")
+                    else:
+                        logger.warning(f"⚠️ No results for {category} in {city}")
+
+                except Exception as e:
+                    logger.error(f"❌ Failed to scrape {category} in {city}: {e}")
+                    # Continue with next combination
+                    continue
+
+                # Small delay between different category/city combinations
+                logger.info(f"Waiting 5 seconds before next batch...")
+                import time
+                time.sleep(5)
+
+        logger.info("")
+        logger.info("=" * 80)
+        logger.info("🎉 BATCH SCRAPING COMPLETED!")
+        logger.info("=" * 80)
+        logger.info(f"Total files created: {len(results_files)}/{total_combinations}")
+        logger.info(f"Success rate: {len(results_files)/total_combinations*100:.1f}%")
+        logger.info("=" * 80)
+
+        if results_files:
+            logger.info("\n📁 Created files:")
+            for f in results_files:
+                logger.info(f"  - {f}")
+
+        return results_files
+
 
 def main():
     """CLI entry point"""
@@ -172,35 +258,42 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Scrape beauty salons in Istanbul
+  # Single category scraping
   python main.py --category "güzellik salonu" --city "Istanbul"
-
-  # Scrape dental clinics in Kadıköy, Istanbul
   python main.py --category "diş kliniği" --city "Istanbul" --district "Kadıköy"
 
-  # Scrape nail salons in Ankara with custom output filename
-  python main.py --category "tırnak salonu" --city "Ankara" --output "ankara_salons.xlsx"
+  # Batch mode: Scrape all categories from config.py
+  python main.py --batch --city "Istanbul"
 
-Categories:
-  - güzellik salonu (beauty salon)
-  - tırnak salonu (nail salon)
-  - diş kliniği (dental clinic)
-  - estetik kliniği (aesthetic clinic)
+  # Batch mode: All categories in all cities from config.py
+  python main.py --batch
+
+Categories (from config.py):
+  - güzellik merkezi, güzellik salonu, beauty center
+  - nail salon, nail art, tırnak salonu
+  - diş kliniği, dental clinic
+  - estetik kliniği, aesthetic clinic
         """
+    )
+
+    parser.add_argument(
+        '--batch',
+        action='store_true',
+        help='Enable batch mode: scrape all categories from config.py'
     )
 
     parser.add_argument(
         '--category',
         type=str,
-        required=True,
-        help='Business category to search for (e.g., "güzellik salonu", "diş kliniği")'
+        default=None,
+        help='Business category to search for (e.g., "güzellik salonu") - Required if not using --batch'
     )
 
     parser.add_argument(
         '--city',
         type=str,
-        required=True,
-        help='City name (required) (e.g., "Istanbul", "Ankara")'
+        default=None,
+        help='City name (e.g., "Istanbul") - Required if not using --batch with all cities'
     )
 
     parser.add_argument(
@@ -214,7 +307,7 @@ Categories:
         '--output',
         type=str,
         default=None,
-        help='Custom output filename (optional)'
+        help='Custom output filename (optional, ignored in batch mode)'
     )
 
     parser.add_argument(
@@ -226,14 +319,29 @@ Categories:
 
     args = parser.parse_args()
 
-    # Create and run scraper
+    # Create scraper app
     app = GoogleMapsScraperApp(num_windows=args.windows)
-    app.run(
-        category=args.category,
-        city=args.city,
-        district=args.district,
-        output_filename=args.output
-    )
+
+    # Batch mode or single mode
+    if args.batch:
+        # Batch mode: scrape all categories
+        if args.city:
+            # Single city, all categories
+            app.batch_run(cities=[args.city], district=args.district)
+        else:
+            # All cities, all categories
+            app.batch_run(district=args.district)
+    else:
+        # Single mode: require category and city
+        if not args.category or not args.city:
+            parser.error("--category and --city are required when not using --batch mode")
+
+        app.run(
+            category=args.category,
+            city=args.city,
+            district=args.district,
+            output_filename=args.output
+        )
 
 
 if __name__ == "__main__":

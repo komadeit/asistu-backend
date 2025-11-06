@@ -26,3 +26,34 @@ MAX_RESULTS_PER_SEARCH = 500  # Maximum number of results to scrape per search
 
 # Performance Settings
 BATCH_SIZE = 10  # Number of businesses to process per tab batch
+
+# ============================================================================
+# BATCH SCRAPING CONFIGURATION
+# ============================================================================
+
+# Predefined categories to search (Türkçe ve İngilizce)
+CATEGORIES = [
+    "güzellik merkezi",
+    "güzellik salonu",
+    "beauty center",
+    "nail salon",
+    "nail art",
+    "tırnak salonu",
+    "diş kliniği",
+    "dental clinic",
+    "estetik kliniği",
+    "aesthetic clinic",
+]
+
+# Cities to search (add more as needed)
+CITIES = [
+    "Istanbul",
+    "Ankara",
+    "Izmir",
+    "Bursa",
+    "Antalya",
+]
+
+# If True, scrape all categories in CATEGORIES list
+# If False, use single category from CLI
+BATCH_MODE = False  # Set to True to enable batch processing
